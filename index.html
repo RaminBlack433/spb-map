@@ -49,6 +49,15 @@
     font-size: 13px;
     color: var(--muted);
   }
+  header .trip-info {
+    margin: 4px 0 0;
+    font-size: 11.5px;
+    color: var(--muted);
+    background: #F0F4F8;
+    padding: 4px 8px;
+    border-radius: 6px;
+    display: inline-block;
+  }
   .tabs {
     display: flex;
     gap: 6px;
@@ -388,13 +397,14 @@
 
 <header>
   <h1>Питер за 3 дня 🌉</h1>
-  <p class="subtitle" id="subtitle">День 1 — «Открыточный Питер»</p>
+  <p class="subtitle" id="subtitle">Среда — «Имперский Петергоф»</p>
+  <p class="trip-info">🛬 Вт 20:00 · маршрут Ср–Пт · 🛫 Сб</p>
 </header>
 
 <div class="tabs">
-  <button class="tab active" data-day="1"><span class="tab-text">День 1</span></button>
-  <button class="tab" data-day="2"><span class="tab-text">День 2</span></button>
-  <button class="tab" data-day="3"><span class="tab-text">День 3</span></button>
+  <button class="tab active" data-day="1"><span class="tab-text">Ср · Петергоф</span></button>
+  <button class="tab" data-day="2"><span class="tab-text">Чт · Открыточный</span></button>
+  <button class="tab" data-day="3"><span class="tab-text">Пт · Эрмитаж</span></button>
 </div>
 
 <div class="toolbar">
@@ -435,7 +445,34 @@
 
   const DAYS = {
     1: {
-      title: 'День 1 — «Открыточный Питер»',
+      title: 'Среда — «Имперский Петергоф»',
+      weekday: 3,
+      color: '#C9A227',
+      startTime: '09:30',
+      places: [
+        { name: 'Большой каскад и фонтан «Самсон», Петергоф', lat: 59.8852144, lon: 29.9090546, time: '10:30', dur: '300 мин',
+          hours: 'Нижний парк 09:00–20:00, фонтаны до 19:45',
+          closedDays: [],
+          price: '~700 ₽ нижний парк, +1200 ₽ Большой дворец',
+          arriveBy: { type: 'boat', dur: '~1 ч 15 мин',
+            text: 'Метро «Парк Победы» → «Невский проспект» (М2, 7 ост., 18 мин). Пешком ~15 мин до Сенатской пристани (рядом с Медным всадником). «Метеор» по Финскому заливу до Петергофа, 40 мин, ≈2500 ₽ в одну сторону. Билет лучше заранее на peterhof-meteor.ru.' },
+          note: 'Запуск фонтанов в 11:00 — будьте за 15 мин, чтобы услышать гимн и увидеть как поднимается «Самсон».' },
+
+        { name: 'Новая Голландия', lat: 59.929, lon: 30.29, time: '18:30', dur: '150 мин',
+          hours: 'Ежедневно 09:00–23:00',
+          closedDays: [],
+          price: 'Вход бесплатный',
+          arriveBy: { type: 'boat', dur: '~1 ч',
+            text: 'Обратно «Метеором» из Петергофа до Сенатской пристани (40 мин). Далее пешком 15 мин по набережной Мойки до Новой Голландии. Альтернатива — после Метеора такси прямо к острову, ~300₽.' },
+          note: 'Бывший военный остров, превращённый в стильное общественное пространство. Рестораны, газон, бутики.' }
+      ],
+      returnTo: { type: 'mixed', dur: '~30 мин',
+        text: 'Пешком 10 мин до метро «Адмиралтейская» (М5) → 1 ост. до «Садовой» → пересадка на «Сенную пл.» (М2) → 3 ост. до «Парк Победы». Или такси — ~500₽, 25 мин.' }
+    },
+
+    2: {
+      title: 'Четверг — «Открыточный Питер»',
+      weekday: 4,
       color: '#1B365D',
       startTime: '09:35',
       places: [
@@ -507,33 +544,9 @@
         text: 'От Дворцового моста — такси до «Парк Победы», ~500–700₽. Метро в это время уже закрыто.' }
     },
 
-    2: {
-      title: 'День 2 — «Имперский Петергоф»',
-      color: '#C9A227',
-      startTime: '09:30',
-      places: [
-        { name: 'Большой каскад и фонтан «Самсон», Петергоф', lat: 59.8852144, lon: 29.9090546, time: '10:30', dur: '300 мин',
-          hours: 'Нижний парк 09:00–20:00, фонтаны до 19:45',
-          closedDays: [],
-          price: '~700 ₽ нижний парк, +1200 ₽ Большой дворец',
-          arriveBy: { type: 'boat', dur: '~1 ч 15 мин',
-            text: 'Метро «Парк Победы» → «Невский проспект» (М2, 7 ост., 18 мин). Пешком ~15 мин до Сенатской пристани (рядом с Медным всадником). «Метеор» по Финскому заливу до Петергофа, 40 мин, ≈2500 ₽ в одну сторону. Билет лучше заранее на peterhof-meteor.ru.' },
-          note: 'Запуск фонтанов в 11:00 — будьте за 15 мин, чтобы услышать гимн и увидеть как поднимается «Самсон».' },
-
-        { name: 'Новая Голландия', lat: 59.929, lon: 30.29, time: '18:30', dur: '150 мин',
-          hours: 'Ежедневно 09:00–23:00',
-          closedDays: [],
-          price: 'Вход бесплатный',
-          arriveBy: { type: 'boat', dur: '~1 ч',
-            text: 'Обратно «Метеором» из Петергофа до Сенатской пристани (40 мин). Далее пешком 15 мин по набережной Мойки до Новой Голландии. Альтернатива — после Метеора такси прямо к острову, ~300₽.' },
-          note: 'Бывший военный остров, превращённый в стильное общественное пространство. Рестораны, газон, бутики.' }
-      ],
-      returnTo: { type: 'mixed', dur: '~30 мин',
-        text: 'Пешком 10 мин до метро «Адмиралтейская» (М5) → 1 ост. до «Садовой» → пересадка на «Сенную пл.» (М2) → 3 ост. до «Парк Победы». Или такси — ~500₽, 25 мин.' }
-    },
-
     3: {
-      title: 'День 3 — «Эрмитаж и финал»',
+      title: 'Пятница — «Эрмитаж и финал»',
+      weekday: 5,
       color: '#7B2D26',
       startTime: '10:25',
       places: [
@@ -580,6 +593,15 @@
   let userPos = null; // {lat, lon, accuracy}
   let userMarker = null;
   let userAccuracyCircle = null;
+
+  const STORAGE_VERSION = '3';
+  try {
+    if (localStorage.getItem('spb_storage_v') !== STORAGE_VERSION) {
+      localStorage.removeItem('spb_visited');
+      localStorage.removeItem('spb_day');
+      localStorage.setItem('spb_storage_v', STORAGE_VERSION);
+    }
+  } catch (e) {}
 
   let visited = {};
   try { visited = JSON.parse(localStorage.getItem('spb_visited') || '{}'); } catch (e) { visited = {}; }
@@ -657,21 +679,18 @@
     return `https://yandex.ru/maps/?rtext=~${lat},${lon}&rtt=auto&text=${encodeURIComponent(name)}`;
   }
 
-  function closedBadge(closedDays) {
+  function closedBadge(closedDays, visitWeekday) {
     if (!closedDays || !closedDays.length) return '';
-    const today = new Date().getDay();
-    const isClosedToday = closedDays.includes(today);
+    const isClosedOnVisitDay = visitWeekday != null && closedDays.includes(visitWeekday);
     const names = closedDays.map(d => WEEKDAYS[d]).join(', ');
-    if (isClosedToday) return `<span class="tag warn">⚠️ Сегодня закрыто (${names})</span>`;
+    if (isClosedOnVisitDay) return `<span class="tag warn">⚠️ В ${WEEKDAY_FULL[visitWeekday]} закрыто!</span>`;
     return `<span class="tag">Закрыто: ${names}</span>`;
   }
 
-  function closedWarnPopup(closedDays) {
+  function closedWarnPopup(closedDays, visitWeekday) {
     if (!closedDays || !closedDays.length) return '';
-    const today = new Date().getDay();
-    const isClosedToday = closedDays.includes(today);
-    if (!isClosedToday) return '';
-    return `<div class="popup-warn">⚠️ Сегодня (${WEEKDAY_FULL[today]}) место закрыто</div>`;
+    if (visitWeekday == null || !closedDays.includes(visitWeekday)) return '';
+    return `<div class="popup-warn">⚠️ В ${WEEKDAY_FULL[visitWeekday]} место закрыто — посмотрите альтернативу</div>`;
   }
 
   function distanceTag(lat, lon) {
@@ -719,7 +738,7 @@
     `;
   }
 
-  function popupHtml(p, prevLat, prevLon) {
+  function popupHtml(p, prevLat, prevLon, visitWeekday) {
     const web = ymPoint(p.lat, p.lon, p.name);
     const meta = p.time ? `${p.time}${p.dur ? ' · ' + p.dur : ''}` : '';
     let routeBtn = '';
@@ -737,7 +756,7 @@
     return `
       <div class="popup-title">${p.name}</div>
       ${meta ? `<div class="popup-meta">${meta}</div>` : ''}
-      ${closedWarnPopup(p.closedDays)}
+      ${closedWarnPopup(p.closedDays, visitWeekday)}
       ${popupInfoBlock(p)}
       ${popupArriveHtml(p.arriveBy)}
       <div class="popup-note">${p.note}</div>
@@ -796,6 +815,8 @@
     }
   }
 
+  const TAB_LABELS = { 1: 'Ср · Петергоф', 2: 'Чт · Открыточный', 3: 'Пт · Эрмитаж' };
+
   function updateTabLabels() {
     document.querySelectorAll('.tab').forEach(t => {
       const d = Number(t.dataset.day);
@@ -803,7 +824,8 @@
       let done = 0;
       for (let i = 0; i < total; i++) if (isVisited(d, i)) done++;
       const txt = t.querySelector('.tab-text');
-      txt.innerHTML = `День ${d}${done > 0 ? ` <span class="progress">${done}/${total}</span>` : ''}`;
+      const base = TAB_LABELS[d] || `День ${d}`;
+      txt.innerHTML = `${base}${done > 0 ? ` <span class="progress">${done}/${total}</span>` : ''}`;
     });
   }
 
@@ -834,7 +856,7 @@
       }
       const v = isVisited(day, i);
       const marker = L.marker([p.lat, p.lon], { icon: makeNumberIcon(i + 1, data.color, v) })
-        .bindPopup(popupHtml(p, prevLat, prevLon));
+        .bindPopup(popupHtml(p, prevLat, prevLon, data.weekday));
       marker.addTo(dayLayer);
       currentMarkers.push(marker);
       prevLat = p.lat; prevLon = p.lon;
@@ -895,7 +917,7 @@
       const tags = [
         p.hours ? `<span class="tag">🕒 ${p.hours.split(',')[0]}</span>` : '',
         p.price && !/бесплатно/i.test(p.price) ? `<span class="tag">💰 ${p.price.split(';')[0].split(',')[0]}</span>` : (p.price ? `<span class="tag">💰 Бесплатно</span>` : ''),
-        closedBadge(p.closedDays),
+        closedBadge(p.closedDays, data.weekday),
         distanceTag(p.lat, p.lon)
       ].filter(Boolean).join('');
 
