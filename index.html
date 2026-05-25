@@ -13,10 +13,11 @@
     --day3: #7B2D26;
     --rain: #6B6B6B;
     --start: #2F8F4E;
+    --user: #2563EB;
+    --warn: #DC2626;
     --bg: #ffffff;
     --text: #1a1a1a;
     --muted: #6b7280;
-    --line: #e5e7eb;
   }
   * { box-sizing: border-box; }
   html, body {
@@ -59,35 +60,40 @@
     border: none;
     background: #f3f4f6;
     border-radius: 12px;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     color: var(--text);
     cursor: pointer;
     transition: background 0.2s, color 0.2s;
     font-family: inherit;
   }
-  .tab.active {
-    background: var(--accent);
-    color: white;
+  .tab .progress {
+    font-size: 11px;
+    opacity: 0.7;
+    margin-left: 3px;
+    font-weight: 600;
   }
-  .rain-toggle {
-    margin: 8px 16px 10px;
-    padding: 10px;
+  .tab.active { background: var(--accent); color: white; }
+  .toolbar {
+    display: flex;
+    gap: 6px;
+    padding: 8px 16px 10px;
+  }
+  .toolbar button {
+    flex: 1;
+    padding: 9px 8px;
     background: #f3f4f6;
     border: none;
     border-radius: 12px;
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 500;
     cursor: pointer;
-    width: calc(100% - 32px);
-    transition: background 0.2s, color 0.2s;
     font-family: inherit;
     color: var(--text);
+    transition: background 0.2s, color 0.2s;
   }
-  .rain-toggle.active {
-    background: var(--rain);
-    color: white;
-  }
+  .toolbar button.active.locate { background: var(--user); color: white; }
+  .toolbar button.active.rain { background: var(--rain); color: white; }
   #map {
     flex: 1;
     width: 100%;
@@ -110,15 +116,21 @@
     font-size: 13px;
     line-height: 1;
   }
+  .marker-pin.visited {
+    background: #b8b8b8 !important;
+  }
+  .marker-pin.visited span::before {
+    content: '✓';
+  }
+  .marker-pin.visited span { font-size: 0; }
+  .marker-pin.visited span::before { font-size: 15px; }
   .marker-rain {
     width: 32px; height: 32px;
     border-radius: 50%;
     background: var(--rain);
     border: 2px solid white;
     box-shadow: 0 2px 6px rgba(0,0,0,0.35);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     font-size: 15px;
   }
   .marker-start {
@@ -127,10 +139,21 @@
     background: var(--start);
     border: 3px solid white;
     box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     font-size: 18px;
+  }
+  .marker-user {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--user);
+    border: 3px solid white;
+    box-shadow: 0 0 0 2px rgba(37,99,235,0.3), 0 2px 6px rgba(0,0,0,0.3);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(37,99,235,0.5), 0 2px 6px rgba(0,0,0,0.3); }
+    70% { box-shadow: 0 0 0 14px rgba(37,99,235,0), 0 2px 6px rgba(0,0,0,0.3); }
+    100% { box-shadow: 0 0 0 0 rgba(37,99,235,0), 0 2px 6px rgba(0,0,0,0.3); }
   }
   .bottom-sheet {
     position: fixed;
@@ -168,18 +191,19 @@
     padding: 4px 12px 24px;
     -webkit-overflow-scrolling: touch;
   }
-  /* Route step (place/start/finish) */
   .step {
     display: flex;
     align-items: flex-start;
-    gap: 12px;
-    padding: 12px;
+    gap: 10px;
+    padding: 12px 8px 12px 10px;
     border-radius: 12px;
-    cursor: pointer;
-    transition: background 0.15s;
+    transition: background 0.15s, opacity 0.2s;
     position: relative;
   }
-  .step:active { background: #f3f4f6; }
+  .step.tappable { cursor: pointer; }
+  .step.tappable:active { background: #f3f4f6; }
+  .step.visited { opacity: 0.55; }
+  .step.visited .step-name { text-decoration: line-through; }
   .step-num {
     width: 30px; height: 30px;
     border-radius: 50%;
@@ -207,7 +231,51 @@
     margin-top: 4px;
     line-height: 1.4;
   }
-  /* Transition between steps */
+  .step-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 6px;
+  }
+  .tag {
+    font-size: 11px;
+    padding: 2px 7px;
+    border-radius: 6px;
+    background: #f3f4f6;
+    color: #444;
+    white-space: nowrap;
+  }
+  .tag.warn {
+    background: #FEE2E2;
+    color: var(--warn);
+    font-weight: 600;
+  }
+  .tag.dist {
+    background: #DBEAFE;
+    color: #1D4ED8;
+    font-weight: 600;
+  }
+  .step-check {
+    width: 30px; height: 30px;
+    border: 2px solid #d1d5db;
+    border-radius: 50%;
+    background: white;
+    color: transparent;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+    align-self: flex-start;
+    margin-top: 1px;
+    transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .step-check.done {
+    background: var(--start);
+    border-color: var(--start);
+    color: white;
+  }
+  .step-check:active { transform: scale(0.92); }
   .transition {
     margin: 2px 0 2px 26px;
     padding: 8px 12px 8px 20px;
@@ -215,7 +283,6 @@
     font-size: 12.5px;
     color: #444;
     line-height: 1.45;
-    position: relative;
   }
   .transition-mode {
     font-weight: 600;
@@ -225,18 +292,8 @@
     gap: 6px;
     margin-bottom: 3px;
   }
-  .transition-mode .ico {
-    font-size: 15px;
-  }
-  .transition-mode .dur {
-    color: var(--muted);
-    font-weight: 500;
-    font-size: 12px;
-  }
-  .transition-text {
-    color: #444;
-    margin-bottom: 6px;
-  }
+  .transition-mode .dur { color: var(--muted); font-weight: 500; font-size: 12px; }
+  .transition-text { color: #444; margin-bottom: 6px; }
   .transition-btn {
     display: inline-flex;
     align-items: center;
@@ -250,13 +307,12 @@
     font-weight: 600;
   }
   .transition-btn:active { background: #e5e7eb; }
-  /* Popup */
   .leaflet-popup-content-wrapper { border-radius: 14px; }
   .leaflet-popup-content {
     margin: 12px 14px;
     font-size: 13px;
     line-height: 1.45;
-    width: 250px !important;
+    width: 260px !important;
   }
   .popup-title {
     font-weight: 700;
@@ -269,6 +325,15 @@
     font-size: 12px;
     margin-bottom: 6px;
   }
+  .popup-warn {
+    background: #FEE2E2;
+    color: var(--warn);
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
   .popup-arrive {
     background: #f3f4f6;
     border-radius: 8px;
@@ -280,11 +345,27 @@
     font-weight: 700;
     margin-bottom: 3px;
     color: var(--text);
-    display: flex;
-    align-items: center;
-    gap: 5px;
   }
   .popup-arrive-text { color: #444; }
+  .popup-info {
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    background: #FEF3C7;
+  }
+  .popup-info-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 2px;
+  }
+  .popup-info-row:last-child { margin-bottom: 0; }
+  .popup-info-label {
+    color: #92400E;
+    font-weight: 700;
+    min-width: 50px;
+  }
+  .popup-info-value { color: #78350F; }
   .popup-note { margin-bottom: 10px; color: #333; }
   .popup-btns { display: flex; gap: 6px; flex-wrap: wrap; }
   .popup-btn {
@@ -297,10 +378,7 @@
     font-size: 12px;
     font-weight: 600;
   }
-  .popup-btn.secondary {
-    background: #f3f4f6;
-    color: var(--accent) !important;
-  }
+  .popup-btn.secondary { background: #f3f4f6; color: var(--accent) !important; }
   @media (min-width: 720px) {
     body { max-width: 720px; margin: 0 auto; box-shadow: 0 0 30px rgba(0,0,0,0.08); }
   }
@@ -314,12 +392,15 @@
 </header>
 
 <div class="tabs">
-  <button class="tab active" data-day="1">День 1</button>
-  <button class="tab" data-day="2">День 2</button>
-  <button class="tab" data-day="3">День 3</button>
+  <button class="tab active" data-day="1"><span class="tab-text">День 1</span></button>
+  <button class="tab" data-day="2"><span class="tab-text">День 2</span></button>
+  <button class="tab" data-day="3"><span class="tab-text">День 3</span></button>
 </div>
 
-<button class="rain-toggle" id="rainToggle">Показать места на случай дождя ☔</button>
+<div class="toolbar">
+  <button id="locateBtn" class="locate">📍 Я здесь</button>
+  <button id="rainToggle" class="rain">☔ Дождевые места</button>
+</div>
 
 <div id="map"></div>
 
@@ -333,22 +414,23 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  // База — точка старта/возврата
+  const WEEKDAYS = ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'];
+  const WEEKDAY_FULL = ['воскресенье', 'понедельник', 'вторник', 'среду', 'четверг', 'пятницу', 'субботу'];
+
   const BASE = {
     name: 'Парк Победы (метро М2)',
     lat: 59.8661, lon: 30.3221,
     note: 'Точка старта и финиша каждого дня. Станция «Парк Победы» синей линии (М2), выход к Московскому проспекту.'
   };
 
-  // Иконки и режимы Я.Картах по типу транспорта
   const MODE = {
-    walk:  { icon: '🚶', label: 'Пешком',      ym: 'pd'   },
-    metro: { icon: '🚇', label: 'Метро',       ym: 'mt'   },
-    bus:   { icon: '🚌', label: 'Автобус',     ym: 'mt'   },
-    train: { icon: '🚆', label: 'Электричка',  ym: 'mt'   },
-    taxi:  { icon: '🚕', label: 'Такси',       ym: 'auto' },
-    boat:  { icon: '⛴️', label: '«Метеор»',    ym: 'auto' },
-    mixed: { icon: '🚇', label: 'Метро + пешком', ym: 'mt' }
+    walk:  { icon: '🚶', label: 'Пешком',         ym: 'pd'   },
+    metro: { icon: '🚇', label: 'Метро',          ym: 'mt'   },
+    bus:   { icon: '🚌', label: 'Автобус',        ym: 'mt'   },
+    train: { icon: '🚆', label: 'Электричка',     ym: 'mt'   },
+    taxi:  { icon: '🚕', label: 'Такси',          ym: 'auto' },
+    boat:  { icon: '⛴️', label: '«Метеор»',       ym: 'auto' },
+    mixed: { icon: '🚇', label: 'Метро + пешком', ym: 'mt'   }
   };
 
   const DAYS = {
@@ -358,43 +440,67 @@
       startTime: '09:35',
       places: [
         { name: 'Казанский собор', lat: 59.9336241, lon: 30.3234245, time: '10:00', dur: '40 мин',
+          hours: 'Ежедневно 09:00–19:30',
+          closedDays: [],
+          price: 'Бесплатно (действующий храм)',
           arriveBy: { type: 'mixed', dur: '~25 мин',
             text: '«Парк Победы» (М2 синяя) → «Невский проспект», 7 остановок, ~18 мин. От станции — 3 мин пешком на восток по Казанской улице к колоннаде.' },
           note: 'Полукруглая колоннада в стиле собора Святого Петра в Риме. Старт дня.' },
 
         { name: 'Спас на Крови', lat: 59.9401, lon: 30.3289, time: '11:00', dur: '60 мин',
+          hours: 'Чт–Вт 10:30–18:00 (лето до 22:30)',
+          closedDays: [3],
+          price: '450 ₽ взрослый',
           arriveBy: { type: 'walk', dur: '~10 мин',
             text: '700 м вдоль канала Грибоедова на север. По пути — Дом Зингера и пара открыточных мостиков.' },
-          note: 'Разноцветный собор, 7000 кв.м мозаики внутри. Закрыт по средам.' },
+          note: 'Разноцветный собор, 7000 кв.м мозаики внутри.' },
 
         { name: 'Летний сад', lat: 59.9449379, lon: 30.3354879, time: '12:30', dur: '60 мин',
+          hours: 'Лето 10:00–22:00, зима 10:00–20:00',
+          closedDays: [2],
+          price: 'Бесплатно',
           arriveBy: { type: 'walk', dur: '~12 мин',
             text: '900 м: вдоль Мойки → Марсово поле → 1-й Садовый мост. Можно сделать остановку на кофе у Конюшенной.' },
-          note: 'Старейший сад Петербурга, заложен Петром I. Закрыт по вторникам.' },
+          note: 'Старейший сад Петербурга, заложен Петром I.' },
 
         { name: 'Дворцовая площадь', lat: 59.9382398, lon: 30.3148729, time: '14:00', dur: '45 мин',
+          hours: 'Круглосуточно',
+          closedDays: [],
+          price: 'Бесплатно',
           arriveBy: { type: 'walk', dur: '~17 мин',
             text: '1.3 км по Дворцовой набережной — вид на Неву и Петропавловку всю дорогу. Дойдёте прямо к Зимнему дворцу.' },
           note: 'Главная площадь страны, Александровская колонна, Зимний дворец.' },
 
         { name: 'Исаакиевский собор + колоннада', lat: 59.933905, lon: 30.306485, time: '15:30', dur: '90 мин',
+          hours: 'Собор 10:30–18:00, колоннада до 22:30 (лето)',
+          closedDays: [3],
+          price: 'Собор 450 ₽, колоннада 400 ₽, комплект 850 ₽',
           arriveBy: { type: 'walk', dur: '~10 мин',
             text: '700 м: через Адмиралтейский проспект к Исаакиевской площади. На колоннаду — 262 ступеньки.' },
-          note: 'Поднимитесь на колоннаду — 262 ступеньки и весь Питер как на ладони. Закрыт по средам.' },
+          note: 'Поднимитесь на колоннаду — 262 ступеньки и весь Питер как на ладони.' },
 
         { name: 'Медный всадник', lat: 59.9363783, lon: 30.3022304, time: '17:30', dur: '20 мин',
+          hours: 'Круглосуточно',
+          closedDays: [],
+          price: 'Бесплатно',
           arriveBy: { type: 'walk', dur: '~5 мин',
             text: '400 м вниз через Александровский сад на Сенатскую площадь.' },
           note: 'Тот самый памятник Петру I из поэмы Пушкина.' },
 
         { name: 'Ресторан Mansarda', lat: 59.93279, lon: 30.3037895, time: '19:00', dur: '120 мин',
+          hours: 'Ежедневно 12:00–00:00',
+          closedDays: [],
+          price: 'Средний чек 3000–5000 ₽',
           arriveBy: { type: 'walk', dur: '~5 мин',
             text: '350 м. Ресторан в БЦ на Почтамтской, 3-5, лифт на 7-й этаж. Столик у окна — бронировать заранее.' },
           note: 'Панорамные окна с видом на купол Исаакия. Бронировать столик у окна.' },
 
         { name: 'Дворцовый мост — разведение', lat: 59.941131, lon: 30.3081618, time: '01:00', dur: '30 мин',
+          hours: 'Разводка 01:10–02:50 (навигация апр–ноя)',
+          closedDays: [],
+          price: 'Бесплатно',
           arriveBy: { type: 'walk', dur: '~10 мин',
-            text: 'После ужина — погуляйте по Невскому или вернитесь в отель отдохнуть. К 01:00 подойдите/подъезжайте к Дворцовому мосту со стороны Адмиралтейской набережной. Развод в 01:10. Если устали — такси из любой точки центра, ~250–400₽.' },
+            text: 'После ужина — погуляйте по Невскому или вернитесь в отель. К 01:00 подойдите/подъезжайте к Дворцовому мосту со стороны Адмиралтейской набережной. Если устали — такси из любой точки центра, ~250–400₽.' },
           note: 'Только в навигацию (конец апреля — ноябрь). Развод в 01:10.' }
       ],
       returnTo: { type: 'taxi', dur: '~20 мин',
@@ -407,11 +513,17 @@
       startTime: '09:30',
       places: [
         { name: 'Большой каскад и фонтан «Самсон», Петергоф', lat: 59.8852144, lon: 29.9090546, time: '10:30', dur: '300 мин',
+          hours: 'Нижний парк 09:00–20:00, фонтаны до 19:45',
+          closedDays: [],
+          price: '~700 ₽ нижний парк, +1200 ₽ Большой дворец',
           arriveBy: { type: 'boat', dur: '~1 ч 15 мин',
-            text: 'Метро «Парк Победы» → «Невский проспект» (М2, 7 ост., 18 мин). Пешком ~15 мин до Сенатской пристани (рядом с Медным всадником). «Метеор» по Финскому заливу до Петергофа, 40 мин, ≈2500 ₽ в одну сторону. Берите билет онлайн на peterhof-meteor.ru — на месте очередь.' },
+            text: 'Метро «Парк Победы» → «Невский проспект» (М2, 7 ост., 18 мин). Пешком ~15 мин до Сенатской пристани (рядом с Медным всадником). «Метеор» по Финскому заливу до Петергофа, 40 мин, ≈2500 ₽ в одну сторону. Билет лучше заранее на peterhof-meteor.ru.' },
           note: 'Запуск фонтанов в 11:00 — будьте за 15 мин, чтобы услышать гимн и увидеть как поднимается «Самсон».' },
 
         { name: 'Новая Голландия', lat: 59.929, lon: 30.29, time: '18:30', dur: '150 мин',
+          hours: 'Ежедневно 09:00–23:00',
+          closedDays: [],
+          price: 'Вход бесплатный',
           arriveBy: { type: 'boat', dur: '~1 ч',
             text: 'Обратно «Метеором» из Петергофа до Сенатской пристани (40 мин). Далее пешком 15 мин по набережной Мойки до Новой Голландии. Альтернатива — после Метеора такси прямо к острову, ~300₽.' },
           note: 'Бывший военный остров, превращённый в стильное общественное пространство. Рестораны, газон, бутики.' }
@@ -426,16 +538,25 @@
       startTime: '10:25',
       places: [
         { name: 'Государственный Эрмитаж', lat: 59.9398317, lon: 30.3145597, time: '11:00', dur: '210 мин',
+          hours: 'Вт, Чт, Сб, Вс 11:00–18:00; Ср, Пт до 20:00',
+          closedDays: [1],
+          price: 'Онлайн ~500 ₽; первый чт месяца бесплатно',
           arriveBy: { type: 'mixed', dur: '~30 мин',
             text: '«Парк Победы» → «Невский проспект» (М2, 7 ост., 18 мин). Пешком ~10 мин: по Большой Морской → выход на Дворцовую площадь → главный вход со стороны Зимнего дворца. Билет заранее на hermitagemuseum.org!' },
-          note: 'Билеты ТОЛЬКО онлайн заранее. Закрыт по понедельникам. Выбрать 2-3 маршрута: парадные залы, павлин-часы, импрессионисты.' },
+          note: 'Билеты ТОЛЬКО онлайн заранее. Выбрать 2-3 маршрута: парадные залы, павлин-часы, импрессионисты.' },
 
         { name: 'Петропавловская крепость', lat: 59.9500019, lon: 30.3166718, time: '15:00', dur: '150 мин',
+          hours: 'Территория 09:30–22:00, музеи 10:00–18:00 (Вт до 17:00)',
+          closedDays: [3],
+          price: 'Территория бесплатно; единый билет в музеи ~750 ₽',
           arriveBy: { type: 'walk', dur: '~20 мин',
             text: '1.5 км: через Дворцовый мост → Стрелка Васильевского острова (Ростральные колонны) → Биржевой мост → Иоанновский мост. Один из самых открыточных пеших маршрутов города.' },
-          note: 'Место, откуда начался Петербург в 1703 году. В 12:00 стреляет полуденная пушка. Закрыта по средам.' },
+          note: 'Место, откуда начался Петербург в 1703 году. В 12:00 стреляет полуденная пушка.' },
 
         { name: 'Севкабель Порт', lat: 59.9243343, lon: 30.2410502, time: '18:30', dur: '180 мин',
+          hours: 'Территория круглосуточно, заведения до 23:00+',
+          closedDays: [],
+          price: 'Вход бесплатный',
           arriveBy: { type: 'taxi', dur: '~15 мин',
             text: 'Такси от Петропавловки на Васильевский остров, ~400–500₽. Альтернатива: автобус 49 от Кронверкского пр., ~30 мин.' },
           note: 'Бывший кабельный завод, теперь главное модное пространство города. Закат над Финским заливом — лучший в городе.' }
@@ -446,12 +567,29 @@
   };
 
   const RAIN_PLACES = [
-    { name: 'Русский музей, Михайловский дворец', lat: 59.938935, lon: 30.332168, note: 'Вся русская живопись: Айвазовский, Репин, Брюллов.' },
-    { name: 'Музей Фаберже, Шуваловский дворец', lat: 59.937, lon: 30.343, note: 'Яйца Фаберже из императорской коллекции.' },
-    { name: 'Юсуповский дворец на Мойке', lat: 59.929, lon: 30.299, note: 'Где убили Распутина, экскурсия с восковыми фигурами.' },
-    { name: 'Дом Зингера / Дом книги', lat: 59.935, lon: 30.325, note: 'Кафе на 2-м этаже с видом на Казанский собор.' },
-    { name: 'Музей Эрарта', lat: 59.929, lon: 30.236, note: 'Современное искусство, открыт до 22:00.' }
+    { name: 'Русский музей, Михайловский дворец', lat: 59.938935, lon: 30.332168, hours: '10:00–18:00 (Чт до 20:00)', closedDays: [2], price: '500 ₽', note: 'Вся русская живопись: Айвазовский, Репин, Брюллов.' },
+    { name: 'Музей Фаберже, Шуваловский дворец', lat: 59.937, lon: 30.343, hours: '10:00–20:45', closedDays: [], price: '550 ₽', note: 'Яйца Фаберже из императорской коллекции.' },
+    { name: 'Юсуповский дворец на Мойке', lat: 59.929, lon: 30.299, hours: '11:00–17:00', closedDays: [], price: '850 ₽ парадные залы', note: 'Где убили Распутина, экскурсия с восковыми фигурами.' },
+    { name: 'Дом Зингера / Дом книги', lat: 59.935, lon: 30.325, hours: '09:00–23:00', closedDays: [], price: 'Бесплатно', note: 'Кафе на 2-м этаже с видом на Казанский собор.' },
+    { name: 'Музей Эрарта', lat: 59.929, lon: 30.236, hours: '10:00–22:00', closedDays: [], price: '900 ₽', note: 'Современное искусство, открыт до 22:00.' }
   ];
+
+  // State
+  let currentDay = 1;
+  let rainOn = false;
+  let userPos = null; // {lat, lon, accuracy}
+  let userMarker = null;
+  let userAccuracyCircle = null;
+
+  let visited = {};
+  try { visited = JSON.parse(localStorage.getItem('spb_visited') || '{}'); } catch (e) { visited = {}; }
+  function saveVisited() { try { localStorage.setItem('spb_visited', JSON.stringify(visited)); } catch (e) {} }
+  function isVisited(day, idx) { return !!visited[`${day}-${idx}`]; }
+  function toggleVisited(day, idx) {
+    const k = `${day}-${idx}`;
+    if (visited[k]) delete visited[k]; else visited[k] = true;
+    saveVisited();
+  }
 
   const map = L.map('map', { zoomControl: true }).setView([59.94, 30.32], 12);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -461,13 +599,13 @@
 
   const dayLayer = L.layerGroup().addTo(map);
   const rainLayer = L.layerGroup();
-  let currentDay = 1;
-  let rainOn = false;
 
-  function makeNumberIcon(num, color) {
+  function makeNumberIcon(num, color, visited) {
+    const cls = visited ? 'marker-pin visited' : 'marker-pin';
+    const bg = visited ? '#b8b8b8' : color;
     return L.divIcon({
       className: 'spb-marker',
-      html: `<div class="marker-pin" style="background:${color}"><span>${num}</span></div>`,
+      html: `<div class="${cls}" style="background:${bg}"><span>${num}</span></div>`,
       iconSize: [32, 42], iconAnchor: [16, 38], popupAnchor: [0, -34]
     });
   }
@@ -485,6 +623,32 @@
       iconSize: [32, 32], iconAnchor: [16, 16], popupAnchor: [0, -18]
     });
   }
+  function makeUserIcon() {
+    return L.divIcon({
+      className: 'spb-marker',
+      html: `<div class="marker-user"></div>`,
+      iconSize: [20, 20], iconAnchor: [10, 10]
+    });
+  }
+
+  // Distance (haversine)
+  function distanceMeters(lat1, lon1, lat2, lon2) {
+    const R = 6371000;
+    const toRad = x => x * Math.PI / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a = Math.sin(dLat / 2) ** 2 +
+              Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+    return 2 * R * Math.asin(Math.sqrt(a));
+  }
+  function fmtDistance(m) {
+    if (m < 1000) return `${Math.round(m / 10) * 10} м`;
+    return `${(m / 1000).toFixed(1)} км`;
+  }
+  function walkMinutes(m) {
+    // ~80 м/мин с поправкой на изгибы пути 1.3
+    return Math.max(1, Math.round((m * 1.3) / 80));
+  }
 
   function ymRoute(fromLat, fromLon, toLat, toLon, mode) {
     return `https://yandex.ru/maps/?rtext=${fromLat},${fromLon}~${toLat},${toLon}&rtt=${mode}`;
@@ -493,13 +657,36 @@
     return `https://yandex.ru/maps/?rtext=~${lat},${lon}&rtt=auto&text=${encodeURIComponent(name)}`;
   }
 
+  function closedBadge(closedDays) {
+    if (!closedDays || !closedDays.length) return '';
+    const today = new Date().getDay();
+    const isClosedToday = closedDays.includes(today);
+    const names = closedDays.map(d => WEEKDAYS[d]).join(', ');
+    if (isClosedToday) return `<span class="tag warn">⚠️ Сегодня закрыто (${names})</span>`;
+    return `<span class="tag">Закрыто: ${names}</span>`;
+  }
+
+  function closedWarnPopup(closedDays) {
+    if (!closedDays || !closedDays.length) return '';
+    const today = new Date().getDay();
+    const isClosedToday = closedDays.includes(today);
+    if (!isClosedToday) return '';
+    return `<div class="popup-warn">⚠️ Сегодня (${WEEKDAY_FULL[today]}) место закрыто</div>`;
+  }
+
+  function distanceTag(lat, lon) {
+    if (!userPos) return '';
+    const m = distanceMeters(userPos.lat, userPos.lon, lat, lon);
+    return `<span class="tag dist">📍 ${fmtDistance(m)} · ${walkMinutes(m)} мин пешком</span>`;
+  }
+
   function transitionHtml(t, fromLat, fromLon, toLat, toLon) {
     const m = MODE[t.type] || MODE.walk;
     const url = ymRoute(fromLat, fromLon, toLat, toLon, m.ym);
     return `
       <div class="transition">
         <div class="transition-mode">
-          <span class="ico">${m.icon}</span>
+          <span>${m.icon}</span>
           <span>${m.label}</span>
           <span class="dur">· ${t.dur}</span>
         </div>
@@ -520,32 +707,78 @@
     `;
   }
 
+  function popupInfoBlock(p) {
+    if (!p.hours && !p.price && !(p.closedDays && p.closedDays.length)) return '';
+    const closed = (p.closedDays && p.closedDays.length) ? WEEKDAYS.filter((_, i) => p.closedDays.includes(i)).join(', ') : '';
+    return `
+      <div class="popup-info">
+        ${p.hours ? `<div class="popup-info-row"><span class="popup-info-label">🕒</span><span class="popup-info-value">${p.hours}</span></div>` : ''}
+        ${closed ? `<div class="popup-info-row"><span class="popup-info-label">🚫</span><span class="popup-info-value">Выходной: ${closed}</span></div>` : ''}
+        ${p.price ? `<div class="popup-info-row"><span class="popup-info-label">💰</span><span class="popup-info-value">${p.price}</span></div>` : ''}
+      </div>
+    `;
+  }
+
   function popupHtml(p, prevLat, prevLon) {
     const web = ymPoint(p.lat, p.lon, p.name);
     const meta = p.time ? `${p.time}${p.dur ? ' · ' + p.dur : ''}` : '';
-    const arriveBlock = popupArriveHtml(p.arriveBy);
     let routeBtn = '';
     if (p.arriveBy && prevLat != null) {
       const m = MODE[p.arriveBy.type] || MODE.walk;
       const url = ymRoute(prevLat, prevLon, p.lat, p.lon, m.ym);
       routeBtn = `<a class="popup-btn secondary" href="${url}" target="_blank" rel="noopener">${m.icon} Маршрут сюда</a>`;
     }
+    let userBtn = '';
+    if (userPos) {
+      const url = ymRoute(userPos.lat, userPos.lon, p.lat, p.lon, 'pd');
+      const m = distanceMeters(userPos.lat, userPos.lon, p.lat, p.lon);
+      userBtn = `<a class="popup-btn secondary" href="${url}" target="_blank" rel="noopener">📍 От меня · ${fmtDistance(m)}</a>`;
+    }
     return `
       <div class="popup-title">${p.name}</div>
       ${meta ? `<div class="popup-meta">${meta}</div>` : ''}
-      ${arriveBlock}
+      ${closedWarnPopup(p.closedDays)}
+      ${popupInfoBlock(p)}
+      ${popupArriveHtml(p.arriveBy)}
       <div class="popup-note">${p.note}</div>
       <div class="popup-btns">
         <a class="popup-btn" href="${web}" target="_blank" rel="noopener">Открыть в Я.Картах</a>
+        ${userBtn}
         ${routeBtn}
       </div>
     `;
   }
 
   function popupStartHtml() {
+    let userBtn = '';
+    if (userPos) {
+      const url = ymRoute(userPos.lat, userPos.lon, BASE.lat, BASE.lon, 'pd');
+      const m = distanceMeters(userPos.lat, userPos.lon, BASE.lat, BASE.lon);
+      userBtn = `<a class="popup-btn secondary" href="${url}" target="_blank" rel="noopener">📍 От меня · ${fmtDistance(m)}</a>`;
+    }
     return `
       <div class="popup-title">🚩 ${BASE.name}</div>
       <div class="popup-note">${BASE.note}</div>
+      ${userBtn ? `<div class="popup-btns">${userBtn}</div>` : ''}
+    `;
+  }
+
+  function popupRainHtml(p) {
+    let userBtn = '';
+    if (userPos) {
+      const url = ymRoute(userPos.lat, userPos.lon, p.lat, p.lon, 'pd');
+      const m = distanceMeters(userPos.lat, userPos.lon, p.lat, p.lon);
+      userBtn = `<a class="popup-btn secondary" href="${url}" target="_blank" rel="noopener">📍 От меня · ${fmtDistance(m)}</a>`;
+    }
+    return `
+      <div class="popup-title">${p.name}</div>
+      ${closedWarnPopup(p.closedDays)}
+      ${popupInfoBlock(p)}
+      <div class="popup-note">${p.note}</div>
+      <div class="popup-btns">
+        <a class="popup-btn" href="${ymPoint(p.lat, p.lon, p.name)}" target="_blank" rel="noopener">Открыть в Я.Картах</a>
+        ${userBtn}
+      </div>
     `;
   }
 
@@ -563,6 +796,19 @@
     }
   }
 
+  function updateTabLabels() {
+    document.querySelectorAll('.tab').forEach(t => {
+      const d = Number(t.dataset.day);
+      const total = DAYS[d].places.length;
+      let done = 0;
+      for (let i = 0; i < total; i++) if (isVisited(d, i)) done++;
+      const txt = t.querySelector('.tab-text');
+      txt.innerHTML = `День ${d}${done > 0 ? ` <span class="progress">${done}/${total}</span>` : ''}`;
+    });
+  }
+
+  let currentMarkers = [];
+
   function renderDay(day) {
     currentDay = day;
     dayLayer.clearLayers();
@@ -573,38 +819,33 @@
       t.classList.toggle('active', t.dataset.day === String(day));
     });
 
-    const markers = [];
+    currentMarkers = [];
 
-    // Стартовая точка
     const startMarker = L.marker([BASE.lat, BASE.lon], { icon: makeStartIcon() })
       .bindPopup(popupStartHtml());
     startMarker.addTo(dayLayer);
-    markers.push(startMarker);
+    currentMarkers.push(startMarker);
 
-    // Маркеры мест и сегменты маршрута
     let prevLat = BASE.lat, prevLon = BASE.lon;
     data.places.forEach((p, i) => {
-      // Сегмент от предыдущей точки к текущей
       if (p.arriveBy) {
         const style = segmentStyle(p.arriveBy.type, data.color);
         L.polyline([[prevLat, prevLon], [p.lat, p.lon]], style).addTo(dayLayer);
       }
-      // Маркер места
-      const marker = L.marker([p.lat, p.lon], { icon: makeNumberIcon(i + 1, data.color) })
+      const v = isVisited(day, i);
+      const marker = L.marker([p.lat, p.lon], { icon: makeNumberIcon(i + 1, data.color, v) })
         .bindPopup(popupHtml(p, prevLat, prevLon));
       marker.addTo(dayLayer);
-      markers.push(marker);
+      currentMarkers.push(marker);
       prevLat = p.lat; prevLon = p.lon;
     });
 
-    // Возвратный сегмент к базе
     if (data.returnTo) {
       const style = segmentStyle(data.returnTo.type, data.color);
       style.opacity = 0.5;
       L.polyline([[prevLat, prevLon], [BASE.lat, BASE.lon]], style).addTo(dayLayer);
     }
 
-    // Подгонка границ
     const allPoints = [[BASE.lat, BASE.lon], ...data.places.map(p => [p.lat, p.lon])];
     const bounds = L.latLngBounds(allPoints);
     map.fitBounds(bounds, {
@@ -614,34 +855,34 @@
       animate: true
     });
 
-    renderSheet(markers);
+    renderSheet();
+    updateTabLabels();
     try { localStorage.setItem('spb_day', String(day)); } catch (e) {}
   }
 
-  function renderSheet(markers) {
+  function renderSheet() {
     const list = document.getElementById('sheetList');
     const data = DAYS[currentDay];
     list.innerHTML = '';
 
-    // Стартовая карточка
     const startEl = document.createElement('div');
-    startEl.className = 'step';
+    startEl.className = 'step tappable';
     startEl.innerHTML = `
       <div class="step-num start">🚩</div>
       <div class="step-info">
         <div class="step-name">Старт · ${data.startTime}</div>
         <div class="step-meta">${BASE.name}</div>
         <div class="step-note">${BASE.note}</div>
+        ${userPos ? `<div class="step-tags">${distanceTag(BASE.lat, BASE.lon)}</div>` : ''}
       </div>
     `;
     startEl.addEventListener('click', () => {
       map.setView([BASE.lat, BASE.lon], 14, { animate: true });
-      markers[0].openPopup();
+      currentMarkers[0].openPopup();
       closeSheet();
     });
     list.appendChild(startEl);
 
-    // Чередуем transition + step
     let prevLat = BASE.lat, prevLon = BASE.lon;
     data.places.forEach((p, i) => {
       if (p.arriveBy) {
@@ -650,35 +891,50 @@
         list.appendChild(transEl.firstElementChild);
       }
 
+      const v = isVisited(currentDay, i);
+      const tags = [
+        p.hours ? `<span class="tag">🕒 ${p.hours.split(',')[0]}</span>` : '',
+        p.price && !/бесплатно/i.test(p.price) ? `<span class="tag">💰 ${p.price.split(';')[0].split(',')[0]}</span>` : (p.price ? `<span class="tag">💰 Бесплатно</span>` : ''),
+        closedBadge(p.closedDays),
+        distanceTag(p.lat, p.lon)
+      ].filter(Boolean).join('');
+
       const stepEl = document.createElement('div');
-      stepEl.className = 'step';
+      stepEl.className = 'step tappable' + (v ? ' visited' : '');
       stepEl.innerHTML = `
-        <div class="step-num" style="background:${data.color}">${i + 1}</div>
+        <div class="step-num" style="background:${v ? '#b8b8b8' : data.color}">${v ? '✓' : (i + 1)}</div>
         <div class="step-info">
           <div class="step-name">${p.name}</div>
           <div class="step-meta">${p.time} · ${p.dur}</div>
           <div class="step-note">${p.note}</div>
+          ${tags ? `<div class="step-tags">${tags}</div>` : ''}
         </div>
+        <button class="step-check ${v ? 'done' : ''}" aria-label="Отметить как посещённое">✓</button>
       `;
-      const idx = i + 1; // marker index (0 = start)
+      const idx = i + 1;
       stepEl.addEventListener('click', () => {
         map.setView([p.lat, p.lon], 16, { animate: true });
-        if (markers[idx]) markers[idx].openPopup();
+        if (currentMarkers[idx]) currentMarkers[idx].openPopup();
         closeSheet();
+      });
+      const checkBtn = stepEl.querySelector('.step-check');
+      checkBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleVisited(currentDay, i);
+        renderDay(currentDay);
       });
       list.appendChild(stepEl);
 
       prevLat = p.lat; prevLon = p.lon;
     });
 
-    // Возврат к базе
     if (data.returnTo) {
       const transEl = document.createElement('div');
       transEl.innerHTML = transitionHtml(data.returnTo, prevLat, prevLon, BASE.lat, BASE.lon);
       list.appendChild(transEl.firstElementChild);
 
       const finishEl = document.createElement('div');
-      finishEl.className = 'step';
+      finishEl.className = 'step tappable';
       finishEl.innerHTML = `
         <div class="step-num start">🏁</div>
         <div class="step-info">
@@ -688,7 +944,7 @@
       `;
       finishEl.addEventListener('click', () => {
         map.setView([BASE.lat, BASE.lon], 14, { animate: true });
-        markers[0].openPopup();
+        currentMarkers[0].openPopup();
         closeSheet();
       });
       list.appendChild(finishEl);
@@ -699,33 +955,70 @@
     rainLayer.clearLayers();
     RAIN_PLACES.forEach(p => {
       L.marker([p.lat, p.lon], { icon: makeRainIcon() })
-        .bindPopup(`
-          <div class="popup-title">${p.name}</div>
-          <div class="popup-note">${p.note}</div>
-          <a class="popup-btn" href="${ymPoint(p.lat, p.lon, p.name)}" target="_blank" rel="noopener">Открыть в Я.Картах</a>
-        `).addTo(rainLayer);
+        .bindPopup(popupRainHtml(p)).addTo(rainLayer);
     });
   }
   buildRainLayer();
 
+  // Geolocation
+  const locateBtn = document.getElementById('locateBtn');
+  locateBtn.addEventListener('click', () => {
+    if (!navigator.geolocation) {
+      alert('Геолокация не поддерживается в этом браузере');
+      return;
+    }
+    locateBtn.textContent = '⏳ Ищу…';
+    locateBtn.disabled = true;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        userPos = { lat: pos.coords.latitude, lon: pos.coords.longitude, accuracy: pos.coords.accuracy };
+        if (userMarker) map.removeLayer(userMarker);
+        if (userAccuracyCircle) map.removeLayer(userAccuracyCircle);
+        userMarker = L.marker([userPos.lat, userPos.lon], { icon: makeUserIcon(), zIndexOffset: 1000 })
+          .bindPopup('<div class="popup-title">📍 Вы здесь</div>')
+          .addTo(map);
+        userAccuracyCircle = L.circle([userPos.lat, userPos.lon], {
+          radius: userPos.accuracy,
+          color: '#2563EB',
+          fillColor: '#2563EB',
+          fillOpacity: 0.08,
+          weight: 1
+        }).addTo(map);
+        map.setView([userPos.lat, userPos.lon], 14, { animate: true });
+        locateBtn.textContent = '📍 Я здесь';
+        locateBtn.disabled = false;
+        locateBtn.classList.add('active');
+        renderDay(currentDay);
+        buildRainLayer();
+      },
+      (err) => {
+        locateBtn.textContent = '📍 Я здесь';
+        locateBtn.disabled = false;
+        alert('Не удалось определить местоположение: ' + (err.message || 'разрешите доступ к геолокации'));
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
+    );
+  });
+
+  // Tabs
   document.querySelectorAll('.tab').forEach(t => {
     t.addEventListener('click', () => renderDay(Number(t.dataset.day)));
   });
 
+  // Rain toggle
   const rainBtn = document.getElementById('rainToggle');
   rainBtn.addEventListener('click', () => {
     rainOn = !rainOn;
     if (rainOn) {
       rainLayer.addTo(map);
       rainBtn.classList.add('active');
-      rainBtn.textContent = 'Скрыть места на случай дождя ☔';
     } else {
       map.removeLayer(rainLayer);
       rainBtn.classList.remove('active');
-      rainBtn.textContent = 'Показать места на случай дождя ☔';
     }
   });
 
+  // Sheet
   const sheet = document.getElementById('sheet');
   const sheetHandle = document.getElementById('sheetHandle');
   function toggleSheet() { sheet.classList.toggle('open'); }
@@ -738,6 +1031,7 @@
     if (saved && DAYS[saved]) startDay = Number(saved);
   } catch (e) {}
   renderDay(startDay);
+  updateTabLabels();
 
   setTimeout(() => map.invalidateSize(), 50);
   window.addEventListener('resize', () => map.invalidateSize());
