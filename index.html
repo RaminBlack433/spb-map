@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Питер за 3 дня 🌉</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  :root {
+    --accent: #1B365D;
+    --day1: #1B365D;
+    --day2: #C9A227;
+    --day3: #7B2D26;
+    --rain: #6B6B6B;
+    --bg: #ffffff;
+    --text: #1a1a1a;
+    --muted: #6b7280;
+    --shadow: 0 4px 16px rgba(0,0,0,0.08);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    display: flex; flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+  }
+  header {
+    padding: 12px 16px 6px;
+    background: #fff;
+    z-index: 500;
+  }
+  header h1 {
+    margin: 0 0 2px 0;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+  }
+  header .subtitle {
+    margin: 0;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .tabs {
+    display: flex;
+    gap: 6px;
+    padding: 8px 16px 0;
+  }
+  .tab {
+    flex: 1;
+    padding: 10px 6px;
+    border: none;
+    background: #f3f4f6;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    font-family: inherit;
+  }
+  .tab.active {
+    background: var(--accent);
+    color: white;
+  }
+  .rain-toggle {
+    margin: 8px 16px 10px;
+    padding: 10px;
+    background: #f3f4f6;
+    border: none;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    width: calc(100% - 32px);
+    transition: background 0.2s, color 0.2s;
+    font-family: inherit;
+    color: var(--text);
+  }
+  .rain-toggle.active {
+    background: var(--rain);
+    color: white;
+  }
+  #map {
+    flex: 1;
+    width: 100%;
+    z-index: 1;
+  }
+  .marker-pin {
+    width: 32px; height: 32px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+    border: 2px solid white;
+  }
+  .marker-pin span {
+    transform: rotate(45deg);
+    color: white;
+    font-weight: 700;
+    font-size: 13px;
+    line-height: 1;
+  }
+  .marker-rain {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--rain);
+    border: 2px solid white;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+  }
+  .bottom-sheet {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    background: #fff;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.12);
+    z-index: 600;
+    max-height: 65vh;
+    transform: translateY(calc(100% - 50px));
+    transition: transform 0.3s ease;
+    display: flex;
+    flex-direction: column;
+  }
+  .bottom-sheet.open {
+    transform: translateY(0);
+  }
+  .sheet-handle {
+    padding: 8px 16px 6px;
+    cursor: pointer;
+    user-select: none;
+    text-align: center;
+  }
+  .sheet-handle .bar {
+    width: 40px; height: 4px;
+    background: #d1d5db;
+    border-radius: 2px;
+    margin: 0 auto 6px;
+  }
+  .sheet-handle .label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+  }
+  .sheet-list {
+    overflow-y: auto;
+    padding: 4px 12px 24px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .place-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .place-item:active {
+    background: #f3f4f6;
+  }
+  .place-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    color: white;
+    font-weight: 700;
+    font-size: 13px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .place-info { flex: 1; min-width: 0; }
+  .place-name {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 2px;
+    line-height: 1.25;
+  }
+  .place-meta {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .leaflet-popup-content-wrapper {
+    border-radius: 14px;
+  }
+  .leaflet-popup-content {
+    margin: 12px 14px;
+    font-size: 13px;
+    line-height: 1.45;
+    width: 240px !important;
+  }
+  .popup-title {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 4px;
+    line-height: 1.3;
+  }
+  .popup-meta {
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+  .popup-note {
+    margin-bottom: 10px;
+    color: #333;
+  }
+  .popup-btn {
+    display: inline-block;
+    padding: 8px 12px;
+    background: var(--accent);
+    color: white !important;
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  @media (min-width: 720px) {
+    body { max-width: 720px; margin: 0 auto; box-shadow: 0 0 30px rgba(0,0,0,0.08); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Питер за 3 дня 🌉</h1>
+  <p class="subtitle" id="subtitle">День 1 — «Открыточный Питер»</p>
+</header>
+
+<div class="tabs">
+  <button class="tab active" data-day="1">День 1</button>
+  <button class="tab" data-day="2">День 2</button>
+  <button class="tab" data-day="3">День 3</button>
+</div>
+
+<button class="rain-toggle" id="rainToggle">Показать места на случай дождя ☔</button>
+
+<div id="map"></div>
+
+<div class="bottom-sheet" id="sheet">
+  <div class="sheet-handle" id="sheetHandle">
+    <div class="bar"></div>
+    <div class="label" id="sheetLabel">Список мест ↑</div>
+  </div>
+  <div class="sheet-list" id="sheetList"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  const DAYS = {
+    1: {
+      title: 'День 1 — «Открыточный Питер»',
+      color: '#1B365D',
+      places: [
+        { name: 'Казанский собор', lat: 59.9336241, lon: 30.3234245, time: '10:00', dur: '40 мин', note: 'Полукруглая колоннада в стиле собора Святого Петра в Риме. Старт дня.' },
+        { name: 'Спас на Крови', lat: 59.9401, lon: 30.3289, time: '11:00', dur: '60 мин', note: 'Разноцветный собор, 7000 кв.м мозаики внутри. Закрыт по средам.' },
+        { name: 'Летний сад', lat: 59.9449379, lon: 30.3354879, time: '12:30', dur: '60 мин', note: 'Старейший сад Петербурга, заложен Петром I. Закрыт по вторникам.' },
+        { name: 'Дворцовая площадь', lat: 59.9382398, lon: 30.3148729, time: '14:00', dur: '45 мин', note: 'Главная площадь страны, Александровская колонна, Зимний дворец.' },
+        { name: 'Исаакиевский собор + колоннада', lat: 59.933905, lon: 30.306485, time: '15:30', dur: '90 мин', note: 'Поднимитесь на колоннаду — 262 ступеньки и весь Питер как на ладони. Закрыт по средам.' },
+        { name: 'Медный всадник', lat: 59.9363783, lon: 30.3022304, time: '17:30', dur: '20 мин', note: 'Тот самый памятник Петру I из поэмы Пушкина.' },
+        { name: 'Ресторан Mansarda', lat: 59.93279, lon: 30.3037895, time: '19:00', dur: '120 мин', note: 'Панорамные окна с видом на купол Исаакия. Бронировать столик у окна.' },
+        { name: 'Дворцовый мост — разведение', lat: 59.941131, lon: 30.3081618, time: '01:00', dur: '30 мин', note: 'Только в навигацию (конец апреля — ноябрь). Развод в 01:10.' }
+      ]
+    },
+    2: {
+      title: 'День 2 — «Имперский Петергоф»',
+      color: '#C9A227',
+      places: [
+        { name: 'Большой каскад и фонтан «Самсон», Петергоф', lat: 59.8852144, lon: 29.9090546, time: '10:30', dur: '300 мин', note: 'Добираться: «Метеор» от Дворцовой набережной 40 мин по заливу, ≈2500 ₽. Запуск фонтанов в 11:00.' },
+        { name: 'Новая Голландия', lat: 59.929, lon: 30.29, time: '18:30', dur: '150 мин', note: 'Бывший военный остров, превращённый в стильное общественное пространство. Рестораны, газон, бутики.' }
+      ]
+    },
+    3: {
+      title: 'День 3 — «Эрмитаж и финал»',
+      color: '#7B2D26',
+      places: [
+        { name: 'Государственный Эрмитаж', lat: 59.9398317, lon: 30.3145597, time: '11:00', dur: '210 мин', note: 'Билеты ТОЛЬКО онлайн заранее на hermitagemuseum.org. Закрыт по понедельникам. Выбрать 2-3 маршрута: парадные залы, павлин-часы, импрессионисты.' },
+        { name: 'Петропавловская крепость', lat: 59.9500019, lon: 30.3166718, time: '15:00', dur: '150 мин', note: 'Место, откуда начался Петербург в 1703 году. В 12:00 стреляет полуденная пушка. Закрыта по средам.' },
+        { name: 'Севкабель Порт', lat: 59.9243343, lon: 30.2410502, time: '18:30', dur: '180 мин', note: 'Бывший кабельный завод, теперь главное модное пространство города. Набережная с видом на Финский залив — лучший закат. Ехать на такси.' }
+      ]
+    }
+  };
+
+  const RAIN_PLACES = [
+    { name: 'Русский музей, Михайловский дворец', lat: 59.938935, lon: 30.332168, note: 'Вся русская живопись: Айвазовский, Репин, Брюллов.' },
+    { name: 'Музей Фаберже, Шуваловский дворец', lat: 59.937, lon: 30.343, note: 'Яйца Фаберже из императорской коллекции.' },
+    { name: 'Юсуповский дворец на Мойке', lat: 59.929, lon: 30.299, note: 'Где убили Распутина, экскурсия с восковыми фигурами.' },
+    { name: 'Дом Зингера / Дом книги', lat: 59.935, lon: 30.325, note: 'Кафе на 2-м этаже с видом на Казанский собор.' },
+    { name: 'Музей Эрарта', lat: 59.929, lon: 30.236, note: 'Современное искусство, открыт до 22:00.' }
+  ];
+
+  const map = L.map('map', { zoomControl: true }).setView([59.94, 30.32], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  const dayLayer = L.layerGroup().addTo(map);
+  const rainLayer = L.layerGroup();
+  let currentDay = 1;
+  let rainOn = false;
+
+  function makeNumberIcon(num, color) {
+    return L.divIcon({
+      className: 'spb-marker',
+      html: `<div class="marker-pin" style="background:${color}"><span>${num}</span></div>`,
+      iconSize: [32, 42],
+      iconAnchor: [16, 38],
+      popupAnchor: [0, -34]
+    });
+  }
+
+  function makeRainIcon() {
+    return L.divIcon({
+      className: 'spb-marker',
+      html: `<div class="marker-rain">☔</div>`,
+      iconSize: [32, 32],
+      iconAnchor: [16, 16],
+      popupAnchor: [0, -18]
+    });
+  }
+
+  function yandexUrls(lat, lon, name) {
+    const web = `https://yandex.ru/maps/?rtext=~${lat},${lon}&rtt=auto&text=${encodeURIComponent(name)}`;
+    return web;
+  }
+
+  function popupHtml(p) {
+    const web = yandexUrls(p.lat, p.lon, p.name);
+    const meta = p.time ? `${p.time} · ${p.dur}` : '';
+    return `
+      <div class="popup-title">${p.name}</div>
+      ${meta ? `<div class="popup-meta">${meta}</div>` : ''}
+      <div class="popup-note">${p.note}</div>
+      <a class="popup-btn" href="${web}" target="_blank" rel="noopener">Маршрут в Яндекс.Картах</a>
+    `;
+  }
+
+  function renderDay(day) {
+    currentDay = day;
+    dayLayer.clearLayers();
+    const data = DAYS[day];
+    document.getElementById('subtitle').textContent = data.title;
+    document.getElementById('sheetLabel').textContent = `Список мест дня · ${data.places.length}`;
+    document.querySelectorAll('.tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.day === String(day));
+    });
+
+    const latlngs = [];
+    const markers = [];
+    data.places.forEach((p, i) => {
+      const num = i + 1;
+      const marker = L.marker([p.lat, p.lon], { icon: makeNumberIcon(num, data.color) })
+        .bindPopup(popupHtml(p));
+      marker._placeIndex = i;
+      marker.addTo(dayLayer);
+      markers.push(marker);
+      latlngs.push([p.lat, p.lon]);
+    });
+    if (latlngs.length > 1) {
+      L.polyline(latlngs, {
+        color: data.color,
+        weight: 4,
+        opacity: 0.7,
+        dashArray: '6, 8'
+      }).addTo(dayLayer);
+    }
+
+    if (latlngs.length) {
+      const bounds = L.latLngBounds(latlngs);
+      map.fitBounds(bounds, {
+        paddingTopLeft: [30, 30],
+        paddingBottomRight: [30, 90],
+        maxZoom: 14,
+        animate: true
+      });
+    }
+
+    renderSheet(markers);
+    try { localStorage.setItem('spb_day', String(day)); } catch (e) {}
+  }
+
+  function renderSheet(markers) {
+    const list = document.getElementById('sheetList');
+    const data = DAYS[currentDay];
+    list.innerHTML = '';
+    data.places.forEach((p, i) => {
+      const item = document.createElement('div');
+      item.className = 'place-item';
+      item.innerHTML = `
+        <div class="place-num" style="background:${data.color}">${i + 1}</div>
+        <div class="place-info">
+          <div class="place-name">${p.name}</div>
+          <div class="place-meta">${p.time} · ${p.dur}</div>
+        </div>
+      `;
+      item.addEventListener('click', () => {
+        map.setView([p.lat, p.lon], 16, { animate: true });
+        if (markers && markers[i]) markers[i].openPopup();
+        closeSheet();
+      });
+      list.appendChild(item);
+    });
+  }
+
+  function buildRainLayer() {
+    rainLayer.clearLayers();
+    RAIN_PLACES.forEach(p => {
+      L.marker([p.lat, p.lon], { icon: makeRainIcon() })
+        .bindPopup(popupHtml({ ...p, time: '', dur: '' }))
+        .addTo(rainLayer);
+    });
+  }
+  buildRainLayer();
+
+  document.querySelectorAll('.tab').forEach(t => {
+    t.addEventListener('click', () => renderDay(Number(t.dataset.day)));
+  });
+
+  const rainBtn = document.getElementById('rainToggle');
+  rainBtn.addEventListener('click', () => {
+    rainOn = !rainOn;
+    if (rainOn) {
+      rainLayer.addTo(map);
+      rainBtn.classList.add('active');
+      rainBtn.textContent = 'Скрыть места на случай дождя ☔';
+    } else {
+      map.removeLayer(rainLayer);
+      rainBtn.classList.remove('active');
+      rainBtn.textContent = 'Показать места на случай дождя ☔';
+    }
+  });
+
+  const sheet = document.getElementById('sheet');
+  const sheetHandle = document.getElementById('sheetHandle');
+  function toggleSheet() { sheet.classList.toggle('open'); }
+  function closeSheet() { sheet.classList.remove('open'); }
+  sheetHandle.addEventListener('click', toggleSheet);
+
+  let startDay = 1;
+  try {
+    const saved = localStorage.getItem('spb_day');
+    if (saved && DAYS[saved]) startDay = Number(saved);
+  } catch (e) {}
+  renderDay(startDay);
+
+  setTimeout(() => map.invalidateSize(), 50);
+  window.addEventListener('resize', () => map.invalidateSize());
+</script>
+</body>
+</html>
